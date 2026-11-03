@@ -48,6 +48,15 @@ export interface PlainLanguageMessage {
   whatIsUncertain: string;
   recommendedNextStep: string;
   ipmUrgency: 'low' | 'moderate' | 'high' | 'immediate';
+  kannadaAudioText?: string;
+  hindiAudioText?: string;
+  farmerDirectSummary?: string;
+  actionChecklist?: {
+    id: string;
+    task: string;
+    priority: 'high' | 'medium' | 'low';
+    category: 'trap' | 'biocontrol' | 'spray' | 'sanitation';
+  }[];
 }
 
 export interface DamageFingerprint {

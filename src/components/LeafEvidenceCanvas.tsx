@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { RegionEvidence } from '../types/phyto';
-import { Layers, Crosshair, ZoomIn, ZoomOut, RotateCcw, Info } from 'lucide-react';
+import { Layers, Crosshair, ZoomIn, ZoomOut, RotateCcw, Info, Sparkles, Eye } from 'lucide-react';
 
 interface LeafEvidenceCanvasProps {
   imageSrc: string;
@@ -45,93 +45,100 @@ export const LeafEvidenceCanvas: React.FC<LeafEvidenceCanvasProps> = ({
     switch (type) {
       case 'tuta_consistent':
         return {
-          stroke: '#F59E0B', // Amber
-          fill: 'rgba(245, 158, 11, 0.28)',
+          stroke: '#F59E0B', // Punchy Gold
+          fill: 'rgba(245, 158, 11, 0.35)',
           badgeBg: '#F59E0B',
-          badgeText: '#0F172A',
+          badgeText: '#000000',
+          glow: 'rgba(245, 158, 11, 0.6)',
           label: 'Tuta-consistent',
         };
       case 'liriomyza_consistent':
         return {
-          stroke: '#10B981', // Emerald
-          fill: 'rgba(16, 185, 129, 0.28)',
+          stroke: '#10B981', // Punchy Emerald
+          fill: 'rgba(16, 185, 129, 0.35)',
           badgeBg: '#10B981',
-          badgeText: '#0F172A',
+          badgeText: '#000000',
+          glow: 'rgba(16, 185, 129, 0.6)',
           label: 'Liriomyza-consistent',
         };
       case 'uncertain':
       default:
         return {
-          stroke: '#F43F5E', // Rose
-          fill: 'rgba(244, 63, 94, 0.28)',
+          stroke: '#F43F5E', // Punchy Rose
+          fill: 'rgba(244, 63, 94, 0.35)',
           badgeBg: '#F43F5E',
           badgeText: '#FFFFFF',
+          glow: 'rgba(244, 63, 94, 0.6)',
           label: 'Uncertain evidence',
         };
     }
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col">
-      {/* Top Canvas Controls Bar */}
-      <div className="px-4 py-2.5 bg-slate-950/70 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+    <div className="neuro-card rounded-2xl overflow-hidden flex flex-col">
+      {/* Top Canvas Controls Bar (Neumorphic tactile strip) */}
+      <div className="px-4 py-3 bg-slate-950/80 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2">
-          <Layers className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="font-semibold text-slate-200">Interactive Evidence Map</span>
+          <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+            <Layers className="w-3.5 h-3.5" />
+          </div>
+          <span className="font-bold text-white text-xs sm:text-sm">
+            Explainable Evidence Map
+          </span>
           <span className="text-slate-500 font-mono">·</span>
-          <span className="text-slate-400">
-            {regions.length} Damage {regions.length === 1 ? 'Region' : 'Regions'} Localized
+          <span className="text-emerald-400 font-mono font-semibold">
+            {regions.length} Localized {regions.length === 1 ? 'Region' : 'Regions'}
           </span>
         </div>
 
-        {/* Layer Switches */}
+        {/* Tactile Layer Switches */}
         <div className="flex items-center gap-1.5 flex-wrap">
           <button
             onClick={() => setShowBoxes(!showBoxes)}
-            className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all ${
               showBoxes
-                ? 'bg-slate-800 text-emerald-400 border border-slate-700'
-                : 'bg-transparent text-slate-400 hover:text-slate-300'
+                ? 'neuro-btn-emerald text-slate-950'
+                : 'neuro-btn text-slate-400 hover:text-white'
             }`}
           >
-            Boundaries
+            Boxes
           </button>
           <button
             onClick={() => setShowVectorPaths(!showVectorPaths)}
-            className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all ${
               showVectorPaths
-                ? 'bg-slate-800 text-emerald-400 border border-slate-700'
-                : 'bg-transparent text-slate-400 hover:text-slate-300'
+                ? 'neuro-btn-emerald text-slate-950'
+                : 'neuro-btn text-slate-400 hover:text-white'
             }`}
           >
-            Gallery Vectors
+            Mine Vectors
           </button>
           <button
             onClick={() => setShowMasks(!showMasks)}
-            className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all ${
               showMasks
-                ? 'bg-slate-800 text-emerald-400 border border-slate-700'
-                : 'bg-transparent text-slate-400 hover:text-slate-300'
+                ? 'neuro-btn-emerald text-slate-950'
+                : 'neuro-btn text-slate-400 hover:text-white'
             }`}
           >
-            Pixel Masks
+            Damage Masks
           </button>
           <button
             onClick={() => setShowHeatmap(!showHeatmap)}
-            className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all ${
               showHeatmap
-                ? 'bg-emerald-950 text-emerald-300 border border-emerald-700/60'
-                : 'bg-transparent text-slate-400 hover:text-slate-300'
+                ? 'neuro-btn-amber text-slate-950 font-bold'
+                : 'neuro-btn text-slate-400 hover:text-white'
             }`}
           >
             Chlorophyll Heatmap
           </button>
           <button
             onClick={() => setShowBadges(!showBadges)}
-            className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all ${
               showBadges
-                ? 'bg-slate-800 text-emerald-400 border border-slate-700'
-                : 'bg-transparent text-slate-400 hover:text-slate-300'
+                ? 'neuro-btn-emerald text-slate-950'
+                : 'neuro-btn text-slate-400 hover:text-white'
             }`}
           >
             Pins (A/B/C)
@@ -140,21 +147,21 @@ export const LeafEvidenceCanvas: React.FC<LeafEvidenceCanvasProps> = ({
           <div className="h-4 w-px bg-slate-800 mx-1 hidden sm:block" />
 
           {/* Zoom Controls */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 neuro-inset p-1 rounded-xl">
             <button
-              onClick={() => setZoom((z) => Math.min(2.2, z + 0.2))}
+              onClick={() => setZoom((z) => Math.min(2.5, z + 0.25))}
               title="Zoom In"
-              className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1 rounded text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
-            <span className="font-mono text-[11px] text-slate-400 w-8 text-center tabular-nums">
+            <span className="font-mono text-[11px] text-emerald-400 font-bold w-10 text-center tabular-nums">
               {(zoom * 100).toFixed(0)}%
             </span>
             <button
-              onClick={() => setZoom((z) => Math.max(1, z - 0.2))}
+              onClick={() => setZoom((z) => Math.max(1, z - 0.25))}
               title="Zoom Out"
-              className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1 rounded text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
@@ -171,18 +178,18 @@ export const LeafEvidenceCanvas: React.FC<LeafEvidenceCanvasProps> = ({
         </div>
       </div>
 
-      {/* Main Stage Viewport */}
+      {/* Main Stage Viewport with Neumorphic Inset Frame */}
       <div
         ref={containerRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        className="relative w-full aspect-[4/3] bg-slate-950 overflow-hidden cursor-crosshair select-none flex items-center justify-center"
+        className="relative w-full aspect-[4/3] bg-black overflow-hidden cursor-crosshair select-none flex items-center justify-center border-y border-slate-900"
       >
         <div
           className="relative w-full h-full transition-transform duration-200"
           style={{ transform: `scale(${zoom})`, transformOrigin: 'center center' }}
         >
-          {/* Base Photographic Image */}
+          {/* Base Photographic Specimen Image */}
           <img
             src={imageSrc}
             alt="Tomato Leaf Specimen Inspection"
@@ -192,7 +199,7 @@ export const LeafEvidenceCanvas: React.FC<LeafEvidenceCanvasProps> = ({
 
           {/* Chlorophyll Heatmap Simulation Layer (When Toggled) */}
           {showHeatmap && (
-            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-600/30 via-amber-500/25 to-rose-600/30 mix-blend-color-burn pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-600/40 via-amber-500/30 to-rose-600/40 mix-blend-color-burn pointer-events-none" />
           )}
 
           {/* SVG Overlay Stage for Regions, Polygons, and Vector Gallery Paths */}
@@ -202,9 +209,15 @@ export const LeafEvidenceCanvas: React.FC<LeafEvidenceCanvasProps> = ({
             preserveAspectRatio="none"
           >
             <defs>
-              <pattern id="uncertainHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-                <line x1="0" y1="0" x2="0" y2="10" stroke="#F43F5E" strokeWidth="2" strokeOpacity="0.4" />
+              <pattern id="uncertainHatch" width="12" height="12" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="0" x2="0" y2="12" stroke="#F43F5E" strokeWidth="2.5" strokeOpacity="0.5" />
               </pattern>
+              <filter id="glowGold" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="0" stdDeviation="6" floodColor="#F59E0B" floodOpacity="0.8" />
+              </filter>
+              <filter id="glowEmerald" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="0" stdDeviation="6" floodColor="#10B981" floodOpacity="0.8" />
+              </filter>
             </defs>
 
             {regions.map((region) => {
@@ -229,12 +242,12 @@ export const LeafEvidenceCanvas: React.FC<LeafEvidenceCanvasProps> = ({
                       y={ymin}
                       width={width}
                       height={height}
-                      rx="16"
+                      rx="18"
                       fill={region.evidenceType === 'uncertain' ? 'url(#uncertainHatch)' : colors.fill}
                       stroke={colors.stroke}
-                      strokeWidth={isSelected ? '3.5' : '1.5'}
-                      strokeDasharray={region.evidenceType === 'uncertain' ? '6 4' : 'none'}
-                      className="transition-all duration-200 group-hover:opacity-90"
+                      strokeWidth={isSelected ? '4' : '2'}
+                      strokeDasharray={region.evidenceType === 'uncertain' ? '8 5' : 'none'}
+                      className="transition-all duration-200 group-hover:opacity-100"
                     />
                   )}
 
@@ -242,7 +255,7 @@ export const LeafEvidenceCanvas: React.FC<LeafEvidenceCanvasProps> = ({
                   {showVectorPaths && (
                     <>
                       {region.galleryType === 'serpentine' && (
-                        // Serpentine meandering trajectory path
+                        // Serpentine meandering trajectory path (vibrant emerald with glow)
                         <path
                           d={`M ${xmin + 20} ${ymin + height * 0.3} 
                              Q ${xmin + width * 0.3} ${ymin + 10}, ${xmin + width * 0.5} ${ymin + height * 0.4} 
@@ -251,9 +264,10 @@ export const LeafEvidenceCanvas: React.FC<LeafEvidenceCanvasProps> = ({
                              T ${xmin + 40} ${ymax - 20}`}
                           fill="none"
                           stroke={colors.stroke}
-                          strokeWidth="3.5"
+                          strokeWidth="4"
                           strokeLinecap="round"
-                          className="opacity-90"
+                          filter={isSelected ? 'url(#glowEmerald)' : undefined}
+                          className="opacity-95"
                         />
                       )}
 
@@ -266,9 +280,10 @@ export const LeafEvidenceCanvas: React.FC<LeafEvidenceCanvasProps> = ({
                           ry={height * 0.38}
                           fill="none"
                           stroke={colors.stroke}
-                          strokeWidth="2.5"
-                          strokeDasharray="4 2"
-                          className="opacity-80"
+                          strokeWidth="3.5"
+                          strokeDasharray="5 3"
+                          filter={isSelected ? 'url(#glowGold)' : undefined}
+                          className="opacity-90"
                         />
                       )}
 
@@ -281,8 +296,8 @@ export const LeafEvidenceCanvas: React.FC<LeafEvidenceCanvasProps> = ({
                              Z`}
                           fill="none"
                           stroke="#F43F5E"
-                          strokeWidth="2.5"
-                          strokeDasharray="5 3"
+                          strokeWidth="3"
+                          strokeDasharray="6 4"
                         />
                       )}
                     </>
@@ -297,29 +312,29 @@ export const LeafEvidenceCanvas: React.FC<LeafEvidenceCanvasProps> = ({
                       height={height + 8}
                       fill="none"
                       stroke={isSelected ? '#FFFFFF' : colors.stroke}
-                      strokeWidth={isSelected ? '2' : '1'}
-                      strokeOpacity={isSelected ? 1 : 0.6}
+                      strokeWidth={isSelected ? '2.5' : '1.5'}
+                      strokeOpacity={isSelected ? 1 : 0.7}
                       strokeDasharray="4 4"
                     />
                   )}
 
-                  {/* Pin / Badge (A, B, C matching Page 5 schematic) */}
+                  {/* High-Impact Pin / Badge (A, B, C matching Page 5 schematic) */}
                   {showBadges && (
-                    <g transform={`translate(${xmin + 18}, ${ymin + 18})`}>
+                    <g transform={`translate(${xmin + 20}, ${ymin + 20})`}>
                       <circle
-                        r="14"
+                        r="16"
                         fill={colors.badgeBg}
-                        stroke="#0F172A"
-                        strokeWidth="2"
-                        className="transition-transform group-hover:scale-110"
+                        stroke="#000000"
+                        strokeWidth="2.5"
+                        className="transition-transform group-hover:scale-125"
                       />
                       <text
                         textAnchor="middle"
                         dominantBaseline="central"
                         fill={colors.badgeText}
-                        fontSize="13"
-                        fontWeight="bold"
-                        fontFamily="sans-serif"
+                        fontSize="14"
+                        fontWeight="900"
+                        fontFamily="monospace"
                       >
                         {region.badge}
                       </text>
@@ -331,56 +346,56 @@ export const LeafEvidenceCanvas: React.FC<LeafEvidenceCanvasProps> = ({
           </svg>
         </div>
 
-        {/* Live Coordinate & Telemetry Crosshair Probe HUD (Bottom-Right) */}
-        <div className="absolute bottom-3 right-3 bg-slate-950/85 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-1.5 text-[11px] font-mono text-slate-300 pointer-events-none flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-slate-400">
-            <Crosshair className="w-3 h-3 text-emerald-400" />
-            <span>SPECTRAL PROBE:</span>
+        {/* Live Coordinate & Spectral Crosshair Probe HUD (Bottom-Right) */}
+        <div className="absolute bottom-3 right-3 neuro-card px-3.5 py-2 rounded-xl text-[11px] font-mono text-slate-200 pointer-events-none flex items-center gap-3 border border-slate-700/80 shadow-xl">
+          <div className="flex items-center gap-1.5 text-emerald-400">
+            <Crosshair className="w-3.5 h-3.5 animate-spin" />
+            <span className="font-bold">PROBE:</span>
           </div>
           {probeCoords ? (
             <div className="flex items-center gap-2">
-              <span className="text-emerald-400 tabular-nums">X: {probeCoords.x}</span>
-              <span className="text-emerald-400 tabular-nums">Y: {probeCoords.y}</span>
+              <span className="text-emerald-400 font-bold tabular-nums">X: {probeCoords.x}</span>
+              <span className="text-emerald-400 font-bold tabular-nums">Y: {probeCoords.y}</span>
               <span className="text-slate-500">|</span>
-              <span className="text-slate-300">Mesophyll intact</span>
+              <span className="text-slate-200">Lamina ROI</span>
             </div>
           ) : (
-            <span className="text-slate-500">Hover canvas to sample</span>
+            <span className="text-slate-400">Hover canvas to inspect</span>
           )}
         </div>
 
         {/* Damage Severity Watermark / Overlay Stat (Top-Left) */}
-        <div className="absolute top-3 left-3 bg-slate-950/85 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-1.5 text-[11px] text-slate-300 pointer-events-none flex items-center gap-2">
-          <span className="text-slate-400">Surface Damage:</span>
-          <span className="font-mono font-bold text-amber-400 tabular-nums">
+        <div className="absolute top-3 left-3 neuro-card px-3.5 py-2 rounded-xl text-[11px] text-slate-200 pointer-events-none flex items-center gap-2 border border-slate-700/80 shadow-xl">
+          <span className="text-slate-400 font-medium">Surface Infestation:</span>
+          <span className="font-mono font-bold text-amber-400 text-sm tabular-nums">
             {leafDamagePercent.toFixed(1)}%
           </span>
         </div>
       </div>
 
-      {/* Bottom Sub-Legend (Slide 5 direct quotes & scientific clarity) */}
-      <div className="p-3 bg-slate-950/90 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+      {/* Bottom Sub-Legend with Tactile Neumorphic Buttons (Slide 5 quotes) */}
+      <div className="p-3.5 bg-slate-950/90 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-1.5 text-slate-300">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
-            <span className="font-medium">A · Tuta-consistent</span>
-            <span className="text-slate-500 text-[11px]">(Broad, blotch-like)</span>
+          <div className="flex items-center gap-2 text-slate-200">
+            <span className="w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)] shrink-0" />
+            <span className="font-bold">A · Tuta-consistent</span>
+            <span className="text-slate-400 text-[11px]">(Broad, blotch-like)</span>
           </div>
-          <div className="flex items-center gap-1.5 text-slate-300">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
-            <span className="font-medium">B · Liriomyza-consistent</span>
-            <span className="text-slate-500 text-[11px]">(Narrow, winding serpentine)</span>
+          <div className="flex items-center gap-2 text-slate-200">
+            <span className="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)] shrink-0" />
+            <span className="font-bold">B · Liriomyza-consistent</span>
+            <span className="text-slate-400 text-[11px]">(Narrow, winding serpentine)</span>
           </div>
-          <div className="flex items-center gap-1.5 text-slate-300">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
-            <span className="font-medium">C · Uncertain evidence</span>
-            <span className="text-slate-500 text-[11px]">(Ambiguous cues: request close-up)</span>
+          <div className="flex items-center gap-2 text-slate-200">
+            <span className="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)] shrink-0" />
+            <span className="font-bold">C · Uncertain evidence</span>
+            <span className="text-slate-400 text-[11px]">(Ambiguous cues: request close-up)</span>
           </div>
         </div>
 
-        <div className="text-[11px] text-slate-400 italic flex items-center gap-1">
-          <Info className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-          <span>Overlays show where evidence sits, not why the model decided.</span>
+        <div className="text-[11px] text-slate-400 italic flex items-center gap-1.5 font-sans">
+          <Info className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <span>Tap pins A, B, or C on canvas to view fine morphological biomarkers.</span>
         </div>
       </div>
     </div>

@@ -1,12 +1,17 @@
 import React from 'react';
-import { Smartphone, Monitor, ShieldCheck, Sparkles } from 'lucide-react';
+import { Smartphone, Monitor, Sun, Moon, Calculator, Sparkles, UserCheck, Stethoscope } from 'lucide-react';
 
 interface HeaderProps {
   activeView: 'evidence' | 'farm-grid' | 'longitudinal' | 'six-layers' | 'benchmarks';
   setActiveView: (view: 'evidence' | 'farm-grid' | 'longitudinal' | 'six-layers' | 'benchmarks') => void;
   pwaMode: boolean;
   setPwaMode: (val: boolean) => void;
+  isDaylightMode: boolean;
+  setIsDaylightMode: (val: boolean) => void;
+  isFarmerSimpleMode: boolean;
+  setIsFarmerSimpleMode: (val: boolean) => void;
   onOpenNewInspection: () => void;
+  onOpenCalculator: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -14,14 +19,19 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveView,
   pwaMode,
   setPwaMode,
+  isDaylightMode,
+  setIsDaylightMode,
+  isFarmerSimpleMode,
+  setIsFarmerSimpleMode,
   onOpenNewInspection,
+  onOpenCalculator,
 }) => {
   return (
-    <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-8">
+    <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4 md:gap-8">
         {/* Zone 1: Brand wordmark (single text element wordmark, no decorative pill attachments) */}
         <div className="flex items-center gap-3 shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-base">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-slate-950 font-bold text-lg shadow-md shadow-emerald-500/30">
             Φ
           </div>
           <button
@@ -38,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Zone 2: Concise navigation links (single line, no wrapping, subtle underline) */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
+        <nav className="hidden md:flex items-center gap-5 text-xs font-semibold text-slate-400">
           <button
             onClick={() => setActiveView('evidence')}
             className={`whitespace-nowrap pb-1 transition-colors hover:text-white ${
@@ -81,29 +91,75 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </nav>
 
-        {/* Zone 3: Primary Action and PWA Viewport Switcher */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Zone 3: Tactile Neumorphic Controls & Actions */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          {/* Simple Farmer Mode vs Agronomist Pro Mode */}
           <button
-            onClick={() => setPwaMode(!pwaMode)}
-            title={pwaMode ? 'Switch to Agronomist Desktop Console' : 'Switch to Farmer PWA Mobile View'}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-900 border border-slate-700 rounded-lg hover:border-slate-600 transition-colors whitespace-nowrap"
+            onClick={() => setIsFarmerSimpleMode(!isFarmerSimpleMode)}
+            title={isFarmerSimpleMode ? 'Switch to Detailed Agronomist Mode' : 'Switch to Simplified Farmer Mode'}
+            className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 neuro-btn ${
+              isFarmerSimpleMode ? 'text-amber-400' : 'text-slate-300'
+            }`}
           >
-            {pwaMode ? (
+            {isFarmerSimpleMode ? (
               <>
-                <Monitor className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Desktop Hub</span>
+                <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">Farmer Mode</span>
               </>
             ) : (
               <>
-                <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Field PWA View</span>
+                <Stethoscope className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden sm:inline">Agronomist Pro</span>
               </>
             )}
           </button>
 
+          {/* Daylight High-Visibility Mode Toggle (for sunlight visibility in field) */}
+          <button
+            onClick={() => setIsDaylightMode(!isDaylightMode)}
+            title={isDaylightMode ? 'Switch to Dark Greenhouse Mode' : 'Switch to High-Contrast Daylight Mode'}
+            className="neuro-btn p-2 rounded-xl text-slate-300 hover:text-amber-400 transition-colors"
+          >
+            {isDaylightMode ? (
+              <Moon className="w-4 h-4 text-cyan-400" />
+            ) : (
+              <Sun className="w-4 h-4 text-amber-400" />
+            )}
+          </button>
+
+          {/* Dosage Calculator Button */}
+          <button
+            onClick={onOpenCalculator}
+            title="Open IPM Treatment & Dosage Calculator"
+            className="hidden sm:flex neuro-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-emerald-400 transition-colors items-center gap-1.5"
+          >
+            <Calculator className="w-3.5 h-3.5 text-emerald-400" />
+            <span>IPM Calculator</span>
+          </button>
+
+          {/* Smartphone PWA Viewport Switcher */}
+          <button
+            onClick={() => setPwaMode(!pwaMode)}
+            title={pwaMode ? 'Switch to Desktop Console' : 'Switch to Farmer PWA Mobile View'}
+            className="hidden lg:flex neuro-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-emerald-400 transition-colors items-center gap-1.5"
+          >
+            {pwaMode ? (
+              <>
+                <Monitor className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Desktop</span>
+              </>
+            ) : (
+              <>
+                <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Mobile PWA</span>
+              </>
+            )}
+          </button>
+
+          {/* Primary CTA: New Inspection (Punchy tactile neumorphic button) */}
           <button
             onClick={onOpenNewInspection}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg shadow-sm shadow-emerald-500/20 active:scale-[0.98] transition-all whitespace-nowrap"
+            className="neuro-btn-emerald px-3.5 py-2 rounded-xl text-xs font-bold text-slate-950 flex items-center gap-1.5 shadow-lg shadow-emerald-500/25 active:scale-95 transition-all whitespace-nowrap cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>New Inspection</span>
