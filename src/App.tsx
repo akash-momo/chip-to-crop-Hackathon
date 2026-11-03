@@ -9,6 +9,7 @@ import { InspectionHistoryView } from './components/InspectionHistoryView';
 import { DamageFingerprintView } from './components/DamageFingerprintView';
 import { FarmAnalyticsView } from './components/FarmAnalyticsView';
 import { ReportModal } from './components/ReportModal';
+import { InspectionComparisonModal } from './components/InspectionComparisonModal';
 import { User, Farm, Field, Plant, Inspection, DashboardOverviewData } from './types/phyto2';
 
 export default function App() {
@@ -41,11 +42,13 @@ export default function App() {
     total_plants: 80,
   });
 
-  // Database collections (Initialized from backend or fallback)
+  // Database collections
   const [inspections, setInspections] = useState<Inspection[]>([]);
   const [plants, setPlants] = useState<Plant[]>([]);
   const [activeInspection, setActiveInspection] = useState<Inspection | null>(null);
   const [reportModalOpen, setReportModalOpen] = useState<boolean>(false);
+  const [comparisonModalOpen, setComparisonModalOpen] = useState<boolean>(false);
+  const [comparisonPair, setComparisonPair] = useState<[Inspection, Inspection] | null>(null);
   const [geminiConnected, setGeminiConnected] = useState<boolean>(true);
 
   // Fetch initial data from server
@@ -103,6 +106,11 @@ export default function App() {
     );
   };
 
+  const handleUpdateInspection = (updated: Inspection) => {
+    setInspections((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+    setActiveInspection(updated);
+  };
+
   const handleSelectPlantToInspect = (plant: Plant) => {
     setCurrentTab('scanner');
   };
@@ -116,8 +124,8 @@ export default function App() {
   };
 
   const handleCompareInspections = (i1: Inspection, i2: Inspection) => {
-    setActiveInspection(i1);
-    setCurrentTab('evidence');
+    setComparisonPair([i1, i2]);
+    setComparisonModalOpen(true);
   };
 
   const pendingReviewsCount = inspections.filter(
@@ -187,6 +195,8 @@ export default function App() {
             inspection={activeInspection}
             onNavigateToFingerprint={() => setCurrentTab('reports')}
             onNavigateToReport={() => setReportModalOpen(true)}
+            currentUser={currentUser}
+            onUpdateInspection={handleUpdateInspection}
           />
         )}
 
@@ -234,6 +244,18 @@ export default function App() {
         isOpen={reportModalOpen}
         onClose={() => setReportModalOpen(false)}
         inspection={activeInspection}
+      />
+
+      {/* Side-by-Side Specimen Comparison Modal */}
+      <InspectionComparisonModal
+        isOpen={comparisonModalOpen}
+        onClose={() => setComparisonModalOpen(false)}
+        inspectionA={comparisonPair?.[0] || null}
+        inspectionB={comparisonPair?.[1] || null}
+        onSelectForView={(insp) => {
+          setActiveInspection(insp);
+          setCurrentTab('evidence');
+        }}
       />
     </>
   );

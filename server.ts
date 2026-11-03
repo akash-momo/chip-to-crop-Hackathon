@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import { GoogleGenAI, Type } from '@google/genai';
@@ -713,7 +714,22 @@ app.post('/api/analyze-leaf', async (req, res) => {
       return res.status(400).json({ error: 'imageBase64 parameter is required' });
     }
 
-    const cleanBase64 = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+    let cleanBase64 = imageBase64;
+    let actualMime = mimeType;
+    let finalImagePath = imageBase64;
+
+    if (imageBase64.startsWith('/src/assets/images') || imageBase64.startsWith('src/assets/images')) {
+      const relativePart = imageBase64.startsWith('/') ? imageBase64.slice(1) : imageBase64;
+      const filePath = path.join(process.cwd(), relativePart);
+      if (fs.existsSync(filePath)) {
+        cleanBase64 = fs.readFileSync(filePath).toString('base64');
+        actualMime = 'image/jpeg';
+      }
+      finalImagePath = imageBase64;
+    } else {
+      cleanBase64 = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+      finalImagePath = imageBase64.startsWith('data:') ? imageBase64 : `data:${mimeType};base64,${cleanBase64}`;
+    }
     let analysisResult: any = null;
 
     if (ai) {
@@ -906,7 +922,7 @@ Conduct:
       plant_identifier: plantId,
       field_id: fieldId,
       farm_id: farmId,
-      image_path: imageBase64.startsWith('data:') ? imageBase64 : `data:${mimeType};base64,${cleanBase64}`,
+      image_path: finalImagePath,
       inspection_date: new Date().toISOString(),
       quality_status: {
         passed: analysisResult.qualityCheck.passed,
