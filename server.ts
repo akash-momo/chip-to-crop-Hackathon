@@ -29,6 +29,15 @@ const ai = process.env.GEMINI_API_KEY
     })
   : null;
 
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(record[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+}
+
 // ==========================================
 // IN-MEMORY SCIENTIFIC DATABASE & SEED DATA
 // ==========================================
@@ -79,8 +88,8 @@ export interface EvidenceRegion {
   confidence: number;
   evidence_description: string;
   gallery_type: 'blotch' | 'serpentine' | 'punctate' | 'indeterminate';
-  area_mm2: number;
-  active_larvae_prob: number;
+  area_mm2?: number;
+  active_larvae_prob?: number;
 }
 
 export interface DamageFingerprintRecord {
@@ -93,8 +102,10 @@ export interface DamageFingerprintRecord {
   leaf_surface_damage_percent: number;
   active_mines_count: number;
   canopy_stratum: string;
-  gps_coordinates: { lat: number; lng: number };
+  gps_coordinates?: { lat: number; lng: number } | null;
   created_at: string;
+  image_sha256?: string;
+  algorithm?: string;
 }
 
 export interface ExpertReview {
@@ -108,6 +119,7 @@ export interface ExpertReview {
 
 export interface Inspection {
   id: string;
+  record_source?: 'sample' | 'live_ai';
   plant_id: string;
   plant_identifier: string;
   field_id: string;
@@ -142,8 +154,8 @@ export interface Inspection {
 let USERS: User[] = [
   {
     id: 'USR-01',
-    name: 'Somesh Gowda',
-    email: 'somesh.gowda@karnataka-farmers.org',
+    name: 'Field Scout',
+    email: 'field.scout@phytotrace.ai',
     role: 'farmer',
     created_at: '2026-09-01T08:00:00Z',
   },
@@ -502,12 +514,93 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Plant care helper: keep responses limited to crops, gardening, and plant health.
+function getPlantHelpFallback(question: string) {
+  const q = question.toLowerCase();
+  const plantTopic = /\b(plant|crop|leaf|leaves|tomato|seed|soil|garden|pest|insect|fungus|disease|water|watering|fertili[sz]er|farm|wilting|yellow|spot|hole)\b/.test(q);
+  if (!plantTopic) {
+    return 'I can only help with plants, crops, pests, and plant care. Tell me the crop and what you can see on it.';
+  }
+  if (/yellow|pale|discolou?r/.test(q)) {
+    return 'Yellow leaves can happen from too much or too little water, a nutrient issue, or pests. Check whether the soil is soggy or very dry, then look under the leaves for insects. Avoid spraying or adding fertilizer until you know more. Which crop is it, and are the older or newer leaves turning yellow?';
+  }
+  if (/pest|insect|bug|caterpillar|worm|hole|chew/.test(q)) {
+    return 'Look on both sides of a few affected leaves for insects, eggs, or fine webbing. Take a clear close-up photo and check nearby plants too. If damage is spreading, ask your local agriculture officer to confirm the pest before spraying. Which crop is affected?';
+  }
+  if (/water|watering|dry|soggy|wilting/.test(q)) {
+    return 'Check the soil near the roots before watering. If it is still wet, wait; if the top soil is dry, water slowly at the base of the plant. Avoid keeping the soil waterlogged. The right amount depends on the crop, soil, and weather—what crop are you growing?';
+  }
+  if (/spot|blotch|mark|rot|fungus|disease/.test(q)) {
+    return 'Many problems can make spots on leaves, and a photo alone may not confirm the cause. Check whether the spots are spreading and whether the underside of the leaf is affected. Avoid spraying until the cause is clearer. Which crop is this, and when did the spots first appear?';
+  }
+  return 'I can help you check plant symptoms and care. Tell me the crop, what you see, and when it started. A clear photo of one affected leaf can help narrow down the next steps.';
+}
+
+app.post('/api/plant-help', async (req, res) => {
+  const question = typeof req.body?.question === 'string' ? req.body.question.trim() : '';
+  if (!question || question.length > 500) {
+    return res.status(400).json({ error: 'Please enter a plant question under 500 characters.' });
+  }
+  if (!ai) {
+    return res.json({ answer: getPlantHelpFallback(question), limited: true });
+  }
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.8-flash',
+      contents: `You are PhytoTrace Plant Help, a small crop-care helper for farmers. Answer only questions about crops, plants, soil, watering, plant diseases, pests, and safe farm practices. If unrelated, reply exactly: I can only help with plants, crops, pests, and plant care. Use simple, friendly language, short sentences, and practical steps. Ask a brief follow-up if needed. Never make a certain diagnosis from text alone. Do not recommend pesticide brands, unsafe mixtures, or unsupported chemical doses. Encourage checking the product label and asking a local agriculture officer before spraying.\n\nFarmer question: ${question}`,
+    });
+    res.json({ answer: response.text || 'I could not prepare an answer. Please try asking in a different way.' });
+  } catch (error) {
+    console.error('Plant help error:', error);
+    res.json({ answer: getPlantHelpFallback(question), limited: true });
+  }
+});
+
+// Create Kannada speech on the server so playback does not depend on a Kannada
+// voice being installed in the farmer's browser or operating system.
+app.post('/api/plant-audio', async (req, res) => {
+  const text = typeof req.body?.text === 'string' ? req.body.text.trim() : '';
+  if (!text || text.length > 1500) {
+    return res.status(400).json({ error: 'Audio text must be between 1 and 1500 characters.' });
+  }
+  if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'MY_GEMINI_API_KEY') {
+    return res.status(503).json({ error: 'Kannada voice service is not configured. Add GEMINI_API_KEY to the project .env file.' });
+  }
+  try {
+    const ttsResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': process.env.GEMINI_API_KEY,
+      },
+      body: JSON.stringify({
+        model: 'gemini-3.8-flash-tts',
+        input: [{ type: 'user_input', content: [{ type: 'text', text: `Read this farmer advisory aloud in clear, natural Kannada at a calm pace. Do not translate it or add words: ${text}` }] }],
+        response_format: { type: 'audio' },
+        generation_config: { speech_config: [{ voice: 'Kore' }] },
+      }),
+    });
+    const result = await ttsResponse.json();
+    if (!ttsResponse.ok) {
+      console.error('Kannada speech service error:', result);
+      return res.status(503).json({ error: 'Kannada audio could not be generated. Please try again.' });
+    }
+    const audioData = result.output_audio?.data || result.output?.audio?.data;
+    if (!audioData) return res.status(503).json({ error: 'Kannada audio was not returned. Please try again.' });
+    res.json({ audio: audioData, mimeType: result.output_audio?.mime_type || 'audio/wav' });
+  } catch (error) {
+    console.error('Kannada speech request failed:', error);
+    res.status(503).json({ error: 'Kannada voice service is temporarily unavailable.' });
+  }
+});
+
 // Auth Routes (Section 16)
 app.post('/api/auth/login', (req, res) => {
   const { email, password, role = 'farmer' } = req.body;
   const user = USERS.find((u) => u.email === email) || {
     id: 'USR-' + Math.random().toString(36).substring(2, 7).toUpperCase(),
-    name: role === 'expert' ? 'Dr. Agricultural Expert' : 'Somesh Gowda (Lead Farmer)',
+    name: role === 'expert' ? 'Dr. Agricultural Expert' : 'Field Scout',
     email: email || 'farmer@phytotrace.ai',
     role,
     created_at: new Date().toISOString(),
@@ -730,6 +823,8 @@ app.post('/api/analyze-leaf', async (req, res) => {
       cleanBase64 = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
       finalImagePath = imageBase64.startsWith('data:') ? imageBase64 : `data:${mimeType};base64,${cleanBase64}`;
     }
+    const sourceImageBytes = Buffer.from(cleanBase64, 'base64');
+    const imageSha256 = crypto.createHash('sha256').update(sourceImageBytes).digest('hex');
     let analysisResult: any = null;
 
     if (ai) {
@@ -749,7 +844,7 @@ Conduct:
 - Calculate leaf damage percentage (0-100%).
 - Provide confidence calibration and abstention check (whether a close-up capture or expert review is warranted).
 - Generate a plain-language agronomist advisory message: what is known, what is uncertain, and clear next steps (referencing ICAR-IIHR and EPPO IPM protocols).
-- Generate a unique Damage Fingerprint hash.
+- Do not invent physical area, GPS, calibrated confidence, or treatment doses. Mark uncertain evidence clearly.
 `;
 
         const response = await ai.models.generateContent({
@@ -826,7 +921,6 @@ Conduct:
                   },
                   required: ['whatIsKnown', 'whatIsUncertain', 'recommendedNextStep'],
                 },
-                fingerprintId: { type: Type.STRING },
               },
               required: [
                 'qualityCheck',
@@ -838,7 +932,6 @@ Conduct:
                 'abstentionRecommended',
                 'regions',
                 'plainLanguageSummary',
-                'fingerprintId',
               ],
             },
           },
@@ -846,84 +939,41 @@ Conduct:
 
         analysisResult = JSON.parse(response.text || '{}');
       } catch (err: any) {
-        console.warn('Gemini vision API error, using algorithmic fallback:', err.message);
+        console.warn('Gemini vision analysis failed:', err.message);
       }
     }
 
-    // Algorithmic fall-back synthesis if Gemini vision is unavailable
     if (!analysisResult) {
-      analysisResult = {
-        qualityCheck: {
-          passed: true,
-          blurDetected: false,
-          glareDetected: false,
-          distanceAcceptable: true,
-          lightingScore: 0.94,
-          feedbackNotes: 'Quality verified. Illumination and contrast within optimal bounds for mine gallery tracking.',
-        },
-        primaryDiagnosis: 'Mixed Infestation (Tuta + Liriomyza)',
-        overallDamagePercent: 24.8,
-        mixedInfestationSuspected: true,
-        calibrationConfidence: 0.89,
-        uncertaintyFlagged: true,
-        abstentionRecommended: false,
-        regions: [
-          {
-            id: 'REG-A',
-            label: 'Region A · Tuta-consistent evidence',
-            evidenceType: 'tuta_consistent',
-            confidence: 0.93,
-            box: { ymin: 480, xmin: 490, ymax: 820, xmax: 840 },
-            morphologyDescription: 'Broad irregular blotch-like necrotic gallery with internal dark frass granular aggregates and parenchymal tissue breakdown.',
-            galleryType: 'blotch',
-            areaMm2Approx: 34.6,
-            activeLarvaeProb: 0.88,
-          },
-          {
-            id: 'REG-B',
-            label: 'Region B · Liriomyza-consistent evidence',
-            evidenceType: 'liriomyza_consistent',
-            confidence: 0.91,
-            box: { ymin: 160, xmin: 240, ymax: 380, xmax: 680 },
-            morphologyDescription: 'Narrow, winding serpentine epidermal path meandering across secondary veins without necrotic blotch widening.',
-            galleryType: 'serpentine',
-            areaMm2Approx: 18.2,
-            activeLarvaeProb: 0.74,
-          },
-          {
-            id: 'REG-C',
-            label: 'Region C · Uncertain evidence',
-            evidenceType: 'uncertain',
-            confidence: 0.58,
-            box: { ymin: 440, xmin: 170, ymax: 760, xmax: 460 },
-            morphologyDescription: 'Winding tracks converging into minor blotch patch; ambiguous cues between secondary serpentine loop and early Tuta mine expansion.',
-            galleryType: 'indeterminate',
-            areaMm2Approx: 14.1,
-            activeLarvaeProb: 0.52,
-          },
-        ],
-        plainLanguageSummary: {
-          whatIsKnown: 'Both irregular blotch galleries (characteristic of Tuta absoluta) and winding serpentine tracks (consistent with Liriomyza spp.) are present on the leaflet blade.',
-          whatIsUncertain: 'Region C demonstrates intermediate morphology where serpentine tracks widen into necrotic tissue; potential overlap or early instar Tuta entry point.',
-          recommendedNextStep: 'Flagged as possible mixed infestation. Deploy pheromone monitoring delta traps for Tuta and yellow sticky cards for adult Liriomyza flies. Capture follow-up macro close-up in 48h.',
-        },
-        fingerprintId: 'FP-' + Math.random().toString(36).substring(2, 9).toUpperCase(),
-      };
+      return res.status(503).json({ error: 'Live AI analysis is unavailable; no synthetic report was created.' });
     }
 
-    // Persist as a real Inspection record in the database!
-    const newInspectionId = 'INSP-' + Date.now().toString(36).toUpperCase();
-    const newFingerprintId = analysisResult.fingerprintId || 'FP-' + Math.random().toString(36).substring(2, 9).toUpperCase();
-    const fingerprintHash = crypto.createHash('sha256').update(newInspectionId + JSON.stringify(analysisResult.regions)).digest('hex');
+    // Save the actual source image and analysis record, then hash the canonical content.
+    const newInspectionId = 'INSP-' + crypto.randomUUID().toUpperCase();
+    const createdAt = new Date().toISOString();
+    const normalizedRegions = (analysisResult.regions || [])
+      .filter((region: any) => region?.box && ['ymin', 'xmin', 'ymax', 'xmax'].every((key) => Number.isFinite(region.box[key])))
+      .map((r: any, idx: number) => ({
+        id: r.id || `REG-${newInspectionId}-${idx + 1}`,
+        inspection_id: newInspectionId,
+        badge: (['A', 'B', 'C', 'D'][idx] || 'A') as any,
+        region_type: ['tuta_consistent', 'liriomyza_consistent', 'uncertain', 'healthy'].includes(r.evidenceType) ? r.evidenceType : 'uncertain',
+        bounding_coordinates: r.box,
+        confidence: r.confidence ?? 0,
+        evidence_description: r.morphologyDescription || 'Description unavailable; please review the leaf image.',
+        gallery_type: ['blotch', 'serpentine', 'punctate', 'indeterminate'].includes(r.galleryType) ? r.galleryType : 'indeterminate',
+        ...(Number.isFinite(r.areaMm2Approx) ? { area_mm2: r.areaMm2Approx } : {}),
+        ...(Number.isFinite(r.activeLarvaeProb) ? { active_larvae_prob: r.activeLarvaeProb } : {}),
+      }));
 
     const createdInspection: Inspection = {
       id: newInspectionId,
+      record_source: 'live_ai',
       plant_id: `PLANT-${plantId}`,
       plant_identifier: plantId,
       field_id: fieldId,
       farm_id: farmId,
       image_path: finalImagePath,
-      inspection_date: new Date().toISOString(),
+      inspection_date: createdAt,
       quality_status: {
         passed: analysisResult.qualityCheck.passed,
         blur_detected: analysisResult.qualityCheck.blurDetected,
@@ -951,32 +1001,32 @@ Conduct:
         what_is_uncertain: analysisResult.plainLanguageSummary.whatIsUncertain,
         recommended_next_step: analysisResult.plainLanguageSummary.recommendedNextStep,
       },
-      regions: (analysisResult.regions || []).map((r: any, idx: number) => ({
-        id: r.id || `REG-${newInspectionId}-${idx + 1}`,
-        inspection_id: newInspectionId,
-        badge: (['A', 'B', 'C', 'D'][idx] || 'A') as any,
-        region_type: r.evidenceType || 'uncertain',
-        bounding_coordinates: r.box || { ymin: 200, xmin: 200, ymax: 600, xmax: 600 },
-        confidence: r.confidence || 0.88,
-        evidence_description: r.morphologyDescription || 'Detected leaf gallery region.',
-        gallery_type: r.galleryType || 'blotch',
-        area_mm2: r.areaMm2Approx || 22.0,
-        active_larvae_prob: r.activeLarvaeProb || 0.75,
-      })),
+      regions: normalizedRegions,
       fingerprint: {
-        id: newFingerprintId,
+        id: '',
         inspection_id: newInspectionId,
         plant_id: plantId,
         farm_id: farmId,
         field_id: fieldId,
-        fingerprint_hash: '0x' + fingerprintHash,
+        fingerprint_hash: '',
         leaf_surface_damage_percent: analysisResult.overallDamagePercent,
-        active_mines_count: analysisResult.regions?.length || 2,
-        canopy_stratum: 'Upper',
-        gps_coordinates: { lat: 13.0498, lng: 77.5872 },
-        created_at: new Date().toISOString(),
+        active_mines_count: normalizedRegions.length,
+        canopy_stratum: 'Not recorded',
+        gps_coordinates: null,
+        image_sha256: imageSha256,
+        algorithm: 'SHA-256 over canonical inspection record and source-image SHA-256',
+        created_at: createdAt,
       },
     };
+
+    const { fingerprint, ...inspectionBody } = createdInspection;
+    const fingerprintBody = Object.fromEntries(
+      Object.entries(fingerprint!).filter(([key]) => key !== 'id' && key !== 'fingerprint_hash'),
+    );
+    const fingerprintPayload = stableStringify({ inspection: inspectionBody, fingerprint: fingerprintBody });
+    const fingerprintHash = crypto.createHash('sha256').update(fingerprintPayload).digest('hex');
+    createdInspection.fingerprint!.fingerprint_hash = `sha256:${fingerprintHash}`;
+    createdInspection.fingerprint!.id = `FP-${fingerprintHash.slice(0, 16).toUpperCase()}`;
 
     // Store in global in-memory database
     INSPECTIONS.unshift(createdInspection);
@@ -991,7 +1041,7 @@ Conduct:
 
     return res.json({
       success: true,
-      source: ai ? 'gemini-3.8-flash-vision' : 'phyto-calibrated-engine',
+      source: 'gemini-3.8-flash-vision',
       inspection: createdInspection,
       analysis: analysisResult,
     });

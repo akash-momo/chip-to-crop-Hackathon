@@ -1,6 +1,7 @@
-import React from 'react';
-import { X, Printer, Download, QrCode, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { X, Printer, Download, QrCode, ShieldCheck, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { Inspection } from '../types/phyto2';
+import { getResearchGuidance, RESEARCH_SOURCES } from '../data/researchGuidance';
 
 interface ReportModalProps {
   isOpen: boolean;
@@ -13,7 +14,18 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   onClose,
   inspection,
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !inspection) return null;
+  const isSample = inspection.record_source !== 'live_ai';
+  const fieldGuidance = getResearchGuidance(inspection.regions);
 
   const handlePrint = () => {
     window.print();
@@ -27,23 +39,27 @@ Report ID: ${inspection.id}
 Plant: ${inspection.plant_identifier}
 Field: ${inspection.field_id}
 Date: ${new Date(inspection.inspection_date).toUTCString()}
-Primary Diagnosis: ${inspection.primary_diagnosis}
+Record Type: ${isSample ? 'DEMO SAMPLE — not field-verified' : 'Live AI-assisted inspection — pending expert review'}
+Primary Finding: ${inspection.primary_diagnosis}
 Surface Damage: ${inspection.overall_damage_percent.toFixed(1)}%
-Confidence Calibration: ${(inspection.calibration_confidence * 100).toFixed(1)}%
+AI Estimate (not field-calibrated): ${(inspection.calibration_confidence * 100).toFixed(1)}%
 Status: ${inspection.verification_status}
 
 REGIONS DETECTED:
 ${inspection.regions
   .map(
     (r) =>
-      `- Region ${r.badge}: ${r.region_type} (${r.area_mm2.toFixed(1)} mm², ${(r.confidence * 100).toFixed(1)}% conf)\n  ${r.evidence_description}`
+      `- Region ${r.badge}: ${r.region_type} (AI estimate ${(r.confidence * 100).toFixed(1)}%)\n  ${r.evidence_description}`
   )
   .join('\n')}
 
 RECOMMENDED NEXT STEPS:
-${inspection.plain_language_summary.recommended_next_step}
+${fieldGuidance.join('\n')}
 
-HASH: ${inspection.fingerprint?.fingerprint_hash || 'N/A'}
+RESEARCH REFERENCES:
+${RESEARCH_SOURCES.map((source) => `- ${source.label} ${source.url}`).join('\n')}
+
+CONTENT FINGERPRINT: ${isSample ? 'Not generated for demo sample data' : inspection.fingerprint?.fingerprint_hash || 'Unavailable'}
 PhytoTrace 2.0 — Intelligence in Every Leaf.
 `;
     const element = document.createElement('a');
@@ -56,16 +72,9 @@ PhytoTrace 2.0 — Intelligence in Every Leaf.
   };
 
   return (
+    <>
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-[#103D2B] border-2 border-[#244637] rounded-3xl max-w-2xl w-full p-6 sm:p-8 text-[#F8FAFC] shadow-2xl relative my-8">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-[#A7B8AE] hover:text-white rounded-xl hover:bg-[#164A35] transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
         {/* 1. Branding & Title Header */}
         <div className="border-b border-[#244637] pb-4 mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -82,6 +91,12 @@ PhytoTrace 2.0 — Intelligence in Every Leaf.
           </span>
         </div>
 
+        {isSample && (
+          <div className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm font-semibold text-amber-900">
+            Demonstration sample — these values are examples and are not verified field measurements.
+          </div>
+        )}
+
         {/* 2. Inspection Identification & Meta */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs mb-5 bg-[#0B251C] p-3.5 rounded-2xl border border-[#244637]">
           <div>
@@ -93,8 +108,8 @@ PhytoTrace 2.0 — Intelligence in Every Leaf.
             <span className="font-mono font-bold text-[#A3E635]">{inspection.plant_identifier}</span>
           </div>
           <div>
-            <span className="text-[#73877B] text-[10px] uppercase font-mono block">Greenhouse Block</span>
-            <span className="font-mono font-bold text-white">Block B · Row 07</span>
+            <span className="text-[#73877B] text-[10px] uppercase font-mono block">Field</span>
+            <span className="font-mono font-bold text-white">{inspection.field_id}</span>
           </div>
           <div>
             <span className="text-[#73877B] text-[10px] uppercase font-mono block">Timestamp</span>
@@ -126,9 +141,9 @@ PhytoTrace 2.0 — Intelligence in Every Leaf.
                 </span>
               </div>
               <div className="bg-[#0B251C] p-2.5 rounded-xl border border-[#244637]">
-                <span className="text-[#73877B] text-[10px] uppercase font-mono block">ECE Confidence</span>
+                <span className="text-[#73877B] text-[10px] uppercase font-mono block">Unvalidated AI estimate</span>
                 <span className="font-mono font-bold text-[#38BDF8] text-sm tabular-nums">
-                  {(inspection.calibration_confidence * 100).toFixed(1)}%
+                  {(inspection.calibration_confidence * 100).toFixed(1)}% estimate
                 </span>
               </div>
             </div>
@@ -145,19 +160,24 @@ PhytoTrace 2.0 — Intelligence in Every Leaf.
               <span className="font-bold text-white">
                 Region {r.badge} · <span className="text-[#BBF7D0] capitalize">{r.region_type.replace('_', ' ')}</span>
               </span>
-              <span className="font-mono text-[#A3E635] font-bold">{(r.confidence * 100).toFixed(0)}% Conf</span>
+              <span className="font-mono text-[#A3E635] font-bold">{(r.confidence * 100).toFixed(0)}% AI estimate</span>
             </div>
           ))}
         </div>
 
-        {/* 8. Recommended Next Steps */}
-        <div className="bg-[#164A35] p-3.5 rounded-2xl border border-[#A3E635]/30 mb-5 text-xs text-slate-200">
-          <span className="font-bold text-[#A3E635] uppercase tracking-wider text-[10px] font-mono block mb-1">
-            Recommended Actionable Next Steps
-          </span>
-          <p className="leading-relaxed font-medium">
-            {inspection.plain_language_summary.recommended_next_step}
-          </p>
+        {/* Research-grounded guidance and named sources */}
+        <div className="mb-5 rounded-2xl border border-[#d8e5d5] bg-[#f6faf3] p-4 text-sm text-[#26382a]">
+          <h3 className="font-bold">Research-informed field notes</h3>
+          <p className="mb-2 text-xs text-[#617363]">These studies support general scouting principles; they do not diagnose this leaf or give a universal treatment dose.</p>
+          <ul className="list-disc space-y-1.5 pl-5 text-xs leading-relaxed">
+            {fieldGuidance.map((item) => <li key={item}>{item}</li>)}
+          </ul>
+          <h4 className="mt-3 text-xs font-bold">Sources</h4>
+          <ul className="mt-1 space-y-1 text-xs">
+            {RESEARCH_SOURCES.map((source) => (
+              <li key={source.id}><a href={source.url} target="_blank" rel="noreferrer" className="text-[#315b35] underline underline-offset-2">{source.label}</a></li>
+            ))}
+          </ul>
         </div>
 
         {/* 10. Footer and Disclaimer (Section 13) */}
@@ -182,9 +202,26 @@ PhytoTrace 2.0 — Intelligence in Every Leaf.
         </div>
 
         <p className="text-[10px] text-[#73877B] italic mt-3 text-center">
-          Disclaimer: This report supports scouting and expert review rather than replacing confirmed statutory diagnosis.
+          AI image estimates are not expert confirmation. No pesticide dose is prescribed. Confirm local rules and label instructions before treatment.
         </p>
       </div>
     </div>
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close report and go back"
+        title="Close report and go back"
+        className="fixed right-3 top-3 z-[110] flex items-center gap-2 rounded-full border border-white/30 bg-[#103D2B] px-3 py-2 text-sm font-bold text-white shadow-xl hover:bg-[#164A35]"
+      >
+        <X className="h-5 w-5" /><span className="hidden sm:inline">Close report</span>
+      </button>
+      <button
+        type="button"
+        onClick={onClose}
+        className="fixed bottom-4 left-1/2 z-[110] flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/30 bg-[#103D2B] px-5 py-3 text-sm font-bold text-white shadow-xl hover:bg-[#164A35]"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back to page
+      </button>
+    </>
   );
 };

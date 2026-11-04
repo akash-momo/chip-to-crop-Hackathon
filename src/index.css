@@ -3,22 +3,22 @@
 
 @layer base {
   :root {
-    --bg-primary: #071C16;
-    --bg-secondary: #0B251C;
-    --surface: #103D2B;
-    --surface-elevated: #164A35;
-    --accent-primary: #A3E635;
-    --accent-secondary: #34D399;
-    --text-primary: #F8FAFC;
-    --text-secondary: #A7B8AE;
-    --text-muted: #73877B;
-    --border-color: #244637;
+    --bg-primary: #F4F8F1;
+    --bg-secondary: #FFFFFF;
+    --surface: #FFFFFF;
+    --surface-elevated: #ECF5E8;
+    --accent-primary: #397A36;
+    --accent-secondary: #23815A;
+    --text-primary: #1D3023;
+    --text-secondary: #506454;
+    --text-muted: #718174;
+    --border-color: #D8E5D5;
   }
 
   body {
     font-family: 'Inter', 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #071C16;
-    color: #F8FAFC;
+    background-color: #F4F8F1;
+    color: #1D3023;
     overflow-x: hidden;
   }
 
@@ -38,12 +38,9 @@
 
 /* Elevated Neumorphic Card */
 .neuro-card {
-  background: linear-gradient(145deg, #124330 0%, #0d3424 100%);
-  border: 1px solid rgba(163, 230, 53, 0.12);
-  box-shadow: 
-    8px 8px 24px rgba(3, 12, 9, 0.7),
-    -4px -4px 16px rgba(28, 86, 61, 0.25),
-    inset 0 1px 1px rgba(255, 255, 255, 0.08);
+  background: linear-gradient(145deg, #ffffff 0%, #f7fbf5 100%);
+  border: 1px solid #d8e5d5;
+  box-shadow: 0 8px 24px rgba(46, 82, 42, 0.09);
 }
 
 .neuro-card-hover {
@@ -60,28 +57,23 @@
 
 /* Sunken Inset / Well */
 .neuro-inset {
-  background: #081f18;
-  border: 1px solid rgba(24, 60, 45, 0.8);
-  box-shadow: 
-    inset 4px 4px 10px rgba(2, 8, 6, 0.75),
-    inset -3px -3px 8px rgba(24, 76, 54, 0.25);
+  background: #f1f6ee;
+  border: 1px solid #dce8d8;
+  box-shadow: inset 0 1px 3px rgba(46, 82, 42, 0.06);
 }
 
 /* Tactile Neumorphic Buttons */
 .neuro-btn {
-  background: linear-gradient(145deg, #154c37 0%, #0e3727 100%);
-  border: 1px solid rgba(163, 230, 53, 0.18);
-  box-shadow: 
-    4px 4px 12px rgba(3, 12, 9, 0.6),
-    -2px -2px 8px rgba(28, 86, 61, 0.25);
+  background: linear-gradient(145deg, #ffffff 0%, #edf5e9 100%);
+  border: 1px solid #cbdcc5;
+  color: #28572d;
+  box-shadow: 0 3px 10px rgba(37, 75, 34, 0.12);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .neuro-btn:hover {
-  background: linear-gradient(145deg, #1a5c43 0%, #11422f 100%);
-  border-color: rgba(163, 230, 53, 0.4);
-  box-shadow: 
-    5px 5px 14px rgba(3, 12, 9, 0.7),
-    -2px -2px 10px rgba(28, 86, 61, 0.35);
+  background: linear-gradient(145deg, #edf5e9 0%, #e3efdd 100%);
+  border-color: #a9c69e;
+  box-shadow: 0 4px 12px rgba(37, 75, 34, 0.16);
 }
 .neuro-btn:active {
   box-shadow: 
@@ -160,26 +152,26 @@
 
 /* Deep Forest & Neon Lime Design System Utilities */
 .bg-deep-forest {
-  background-color: #071C16;
+  background-color: #F4F8F1;
 }
 .bg-deep-forest-secondary {
-  background-color: #0B251C;
+  background-color: #ECF5E8;
 }
 .bg-forest-surface {
-  background-color: #103D2B;
+  background-color: #FFFFFF;
 }
 .bg-forest-elevated {
-  background-color: #164A35;
+  background-color: #E3F0DE;
 }
 
 .text-neon-lime {
-  color: #A3E635;
+  color: #397A36;
 }
 .bg-neon-lime {
-  background-color: #A3E635;
+  background-color: #70B94F;
 }
 .border-forest {
-  border-color: #244637;
+  border-color: #D8E5D5;
 }
 
 /* Glowing Accents */
@@ -220,19 +212,42 @@
 
 /* Glass panel */
 .glass-panel {
-  background: rgba(16, 61, 43, 0.8);
+  background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(36, 70, 55, 0.9);
+  border: 1px solid rgba(216, 229, 213, 0.95);
 }
 
 .glass-panel-elevated {
-  background: rgba(22, 74, 53, 0.9);
+  background: rgba(248, 252, 246, 0.96);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(163, 230, 53, 0.25);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(112, 185, 79, 0.3);
+  box-shadow: 0 12px 36px rgba(41, 76, 36, 0.12);
 }
+
+/* Keep legacy dark utility classes readable with the new light field theme. */
+[class~="text-white"] { color: #1d3023 !important; }
+.plant-help-user-message, .plant-help-toggle, .farmer-primary-button { color: #ffffff !important; }
+[class~="text-slate-200"], [class~="text-slate-300"] { color: #354b39 !important; }
+[class~="text-slate-400"] { color: #617363 !important; }
+[class~="bg-slate-950"], [class~="bg-slate-900"],
+[class~="bg-slate-900/60"], [class~="bg-slate-900/90"] {
+  background-color: #edf4e9 !important;
+}
+[class~="border-slate-800"], [class~="border-slate-700/60"] {
+  border-color: #d8e5d5 !important;
+}
+[class*="bg-[#071C16]"], [class*="bg-[#0B251C]"],
+[class*="bg-[#103D2B]"], [class*="bg-[#164A35]"] {
+  background-color: #ffffff !important;
+}
+[class*="text-[#F8FAFC]"] { color: #1d3023 !important; }
+[class*="text-[#A7B8AE]"] { color: #536756 !important; }
+[class*="text-[#A3E635]"] { color: #397a36 !important; }
+[class*="text-[#BBF7D0]"] { color: #38563b !important; }
+[class~="text-emerald-300"], [class~="text-emerald-400"],
+[class~="text-green-300"], [class~="text-cyan-300"] { color: #287244 !important; }
 
 /* Custom scrollbars */
 ::-webkit-scrollbar {
@@ -240,12 +255,12 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #071C16;
+  background: #ECF5E8;
 }
 ::-webkit-scrollbar-thumb {
-  background: #244637;
+  background: #AFC7A7;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #A3E635;
+  background: #397A36;
 }

@@ -10,6 +10,7 @@ import { DamageFingerprintView } from './components/DamageFingerprintView';
 import { FarmAnalyticsView } from './components/FarmAnalyticsView';
 import { ReportModal } from './components/ReportModal';
 import { InspectionComparisonModal } from './components/InspectionComparisonModal';
+import { PlantHelpChat } from './components/PlantHelpChat';
 import { User, Farm, Field, Plant, Inspection, DashboardOverviewData } from './types/phyto2';
 
 export default function App() {
@@ -19,8 +20,8 @@ export default function App() {
   // Authenticated State
   const [currentUser, setCurrentUser] = useState<User>({
     id: 'USR-01',
-    name: 'Somesh Gowda',
-    email: 'somesh.gowda@karnataka-farmers.org',
+    name: 'Field Scout',
+    email: 'field.scout@phytotrace.ai',
     role: 'farmer',
     created_at: '2026-09-01T08:00:00Z',
   });
@@ -49,19 +50,9 @@ export default function App() {
   const [reportModalOpen, setReportModalOpen] = useState<boolean>(false);
   const [comparisonModalOpen, setComparisonModalOpen] = useState<boolean>(false);
   const [comparisonPair, setComparisonPair] = useState<[Inspection, Inspection] | null>(null);
-  const [geminiConnected, setGeminiConnected] = useState<boolean>(true);
 
   // Fetch initial data from server
   useEffect(() => {
-    fetch('/api/health')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.geminiConfigured !== undefined) {
-          setGeminiConnected(data.geminiConfigured);
-        }
-      })
-      .catch((err) => console.warn('Health check error:', err));
-
     fetch('/api/inspections')
       .then((res) => res.json())
       .then((data) => {
@@ -85,6 +76,11 @@ export default function App() {
   const handleLaunchDashboard = (targetTab: string = 'overview') => {
     setCurrentTab(targetTab);
     setAppMode('dashboard');
+  };
+
+  const handleAuthSuccess = (user: User) => {
+    setCurrentUser(user);
+    handleLaunchDashboard('overview');
   };
 
   const handleInspectionAnalyzed = (newInspection: Inspection) => {
@@ -154,7 +150,7 @@ export default function App() {
     return (
       <LandingPage
         onLaunchDashboard={handleLaunchDashboard}
-        geminiConnected={geminiConnected}
+        onAuthSuccess={handleAuthSuccess}
       />
     );
   }
@@ -257,6 +253,7 @@ export default function App() {
           setCurrentTab('evidence');
         }}
       />
+      <PlantHelpChat />
     </>
   );
 }

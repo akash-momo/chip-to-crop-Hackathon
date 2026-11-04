@@ -64,8 +64,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     } else {
       setCurrentUser({
         id: 'USR-01',
-        name: 'Somesh Gowda',
-        email: 'somesh.gowda@karnataka-farmers.org',
+        name: 'Field Scout',
+        email: 'field.scout@phytotrace.ai',
         role: 'farmer',
         created_at: '2026-09-01T08:00:00Z',
       });
@@ -80,10 +80,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   }).format(new Date());
 
   return (
-    <div className="min-h-screen bg-[#071C16] text-[#F8FAFC] flex flex-col md:flex-row">
+    <div className="min-h-screen bg-[#F4F8F1] text-[#1D3023] flex flex-col md:flex-row">
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden md:flex flex-col justify-between bg-[#0B251C] border-r border-[#244637] transition-all duration-300 z-30 shrink-0 ${
+        className={`hidden md:flex flex-col justify-between bg-white border-r border-[#D8E5D5] transition-all duration-300 z-30 shrink-0 ${
           collapsed ? 'w-20' : 'w-64'
         }`}
       >

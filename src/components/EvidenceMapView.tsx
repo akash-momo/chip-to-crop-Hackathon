@@ -47,8 +47,6 @@ export const EvidenceMapView: React.FC<EvidenceMapViewProps> = ({
   );
 
   // Layer switches
-  const [showMasks, setShowMasks] = useState<boolean>(true);
-  const [showVectorPaths, setShowVectorPaths] = useState<boolean>(true);
   const [showBadges, setShowBadges] = useState<boolean>(true);
   const [showBoxes, setShowBoxes] = useState<boolean>(true);
   const [zoom, setZoom] = useState<number>(1);
@@ -174,14 +172,14 @@ export const EvidenceMapView: React.FC<EvidenceMapViewProps> = ({
             <span className="hidden sm:inline">Voice Advisory</span>
           </button>
 
-          {/* Dosage Calculator Button */}
+          {/* Field action guide button */}
           <button
             onClick={() => setShowTreatmentCalc(true)}
             className="neuro-btn-emerald px-3 py-2 rounded-xl text-xs font-bold text-slate-950 transition-all flex items-center gap-1.5 shadow-md"
-            title="Calculate required traps, neem extract, and bio-control dosage"
+            title="Open research-informed field action guide"
           >
             <Calculator className="w-3.5 h-3.5" />
-            <span>Dosage Calculator</span>
+            <span>Field Action Guide</span>
           </button>
 
           {/* Diagnostic Cheat Sheet Toggle */}
@@ -222,7 +220,9 @@ export const EvidenceMapView: React.FC<EvidenceMapViewProps> = ({
       {showAudioGuide && (
         <div className="transition-all animate-fadeIn">
           <AudioFarmerReader
-            englishText={`PhytoTrace Leaf Diagnostic Advisory for Plant ${inspection.plant_identifier}. ${inspection.primary_diagnosis}. Observed lamina surface damage is approximately ${inspection.overall_damage_percent.toFixed(1)} percent. ${inspection.plain_language_summary.recommended_next_step}`}
+            englishText={`Your plant has signs of ${inspection.primary_diagnosis}. About ${Math.round(inspection.overall_damage_percent)} percent of this leaf is damaged. Please check nearby plants and follow the next step shown on the screen. Ask a local agriculture worker if you are unsure before spraying.`}
+            kannadaText={`ನಿಮ್ಮ ಟೊಮೇಟೊ ಗಿಡದ ಎಲೆಯಲ್ಲಿ ಕೀಟದ ಹಾನಿಯ ಗುರುತುಗಳಿವೆ. ಈ ಎಲೆಯ ಸುಮಾರು ${Math.round(inspection.overall_damage_percent)} ಶೇಕಡಾ ಭಾಗ ಹಾನಿಯಾಗಿದೆ. ಪಕ್ಕದ ಗಿಡಗಳನ್ನೂ ಪರಿಶೀಲಿಸಿ. ಸಿಂಪಡಣೆ ಮಾಡುವ ಮೊದಲು ಸ್ಥಳೀಯ ಕೃಷಿ ಅಧಿಕಾರಿಯ ಸಲಹೆ ಪಡೆಯಿರಿ.`}
+            hindiText={`आपके टमाटर के पौधे की पत्ती पर कीट के नुकसान के निशान हैं। इस पत्ती का लगभग ${Math.round(inspection.overall_damage_percent)} प्रतिशत हिस्सा खराब है। पास के पौधों को भी देखें। छिड़काव करने से पहले स्थानीय कृषि अधिकारी से सलाह लें।`}
             primaryDiagnosis={inspection.primary_diagnosis}
           />
         </div>
@@ -407,10 +407,10 @@ export const EvidenceMapView: React.FC<EvidenceMapViewProps> = ({
           <div className="px-4 py-3 bg-[#071C16] border-b border-[#244637] flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2">
               <Layers className="w-4 h-4 text-[#A3E635]" />
-              <span className="font-bold text-white">Specimen Stage</span>
+              <span className="font-bold text-white">Leaf Photo</span>
               <span className="text-[#73877B]">|</span>
               <span className="font-mono text-[#A3E635] text-[11px]">
-                {inspection.regions.length} Evidence Region{inspection.regions.length === 1 ? '' : 's'}
+                {inspection.regions.length} estimated area{inspection.regions.length === 1 ? '' : 's'}
               </span>
             </div>
 
@@ -425,26 +425,6 @@ export const EvidenceMapView: React.FC<EvidenceMapViewProps> = ({
                 }`}
               >
                 Boundaries
-              </button>
-              <button
-                onClick={() => setShowVectorPaths(!showVectorPaths)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
-                  showVectorPaths
-                    ? 'neuro-btn-neon text-slate-950 font-bold'
-                    : 'text-[#A7B8AE] hover:text-white'
-                }`}
-              >
-                Gallery Vectors
-              </button>
-              <button
-                onClick={() => setShowMasks(!showMasks)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
-                  showMasks
-                    ? 'neuro-btn-neon text-slate-950 font-bold'
-                    : 'text-[#A7B8AE] hover:text-white'
-                }`}
-              >
-                Masks
               </button>
               <button
                 onClick={() => setShowBadges(!showBadges)}
@@ -529,8 +509,6 @@ export const EvidenceMapView: React.FC<EvidenceMapViewProps> = ({
                   const { ymin, xmin, ymax, xmax } = region.bounding_coordinates;
                   const width = xmax - xmin;
                   const height = ymax - ymin;
-                  const cx = xmin + width / 2;
-                  const cy = ymin + height / 2;
 
                   return (
                     <g
@@ -538,78 +516,17 @@ export const EvidenceMapView: React.FC<EvidenceMapViewProps> = ({
                       onClick={() => setSelectedRegionId(region.id)}
                       className="cursor-pointer group"
                     >
-                      {/* Mask Rectangle */}
-                      {showMasks && (
+                      {/* Estimated location only; do not draw invented gallery shapes. */}
+                      {showBoxes && (
                         <rect
                           x={xmin}
                           y={ymin}
                           width={width}
                           height={height}
-                          rx="16"
-                          fill={style.fill}
-                          stroke={style.stroke}
-                          strokeWidth={isSelected ? '4' : '2'}
-                          strokeDasharray={region.region_type === 'uncertain' ? '6 4' : 'none'}
-                          className="transition-all duration-200 group-hover:opacity-95"
-                        />
-                      )}
-
-                      {/* Vector Gallery Tracing */}
-                      {showVectorPaths && (
-                        <>
-                          {region.gallery_type === 'serpentine' && (
-                            <path
-                              d={`M ${xmin + 20} ${ymin + height * 0.3} 
-                                 Q ${xmin + width * 0.3} ${ymin + 10}, ${xmin + width * 0.5} ${ymin + height * 0.4} 
-                                 T ${xmax - 30} ${ymin + height * 0.2}
-                                 Q ${xmax - 10} ${ymin + height * 0.6}, ${xmin + width * 0.7} ${ymin + height * 0.75}
-                                 T ${xmin + 40} ${ymax - 20}`}
-                              fill="none"
-                              stroke={style.stroke}
-                              strokeWidth={isSelected ? '5' : '3.5'}
-                              strokeLinecap="round"
-                            />
-                          )}
-
-                          {region.gallery_type === 'blotch' && (
-                            <ellipse
-                              cx={cx}
-                              cy={cy}
-                              rx={width * 0.42}
-                              ry={height * 0.38}
-                              fill="none"
-                              stroke={style.stroke}
-                              strokeWidth={isSelected ? '4' : '2.5'}
-                              strokeDasharray="4 2"
-                            />
-                          )}
-
-                          {region.gallery_type === 'indeterminate' && (
-                            <path
-                              d={`M ${xmin + 20} ${ymin + 30} 
-                                 C ${xmin + width * 0.4} ${ymin + 10}, ${xmax - 20} ${ymin + 40}, ${xmax - 20} ${cy}
-                                 C ${xmax - 10} ${ymax - 20}, ${xmin + width * 0.6} ${ymax - 10}, ${xmin + 20} ${ymax - 30}
-                                 Z`}
-                              fill="none"
-                              stroke="#FBBF24"
-                              strokeWidth="3"
-                              strokeDasharray="5 3"
-                            />
-                          )}
-                        </>
-                      )}
-
-                      {/* Boundary Box */}
-                      {showBoxes && (
-                        <rect
-                          x={xmin - 3}
-                          y={ymin - 3}
-                          width={width + 6}
-                          height={height + 6}
                           fill="none"
-                          stroke={isSelected ? '#FFFFFF' : style.stroke}
-                          strokeWidth={isSelected ? '2.5' : '1.5'}
-                          strokeDasharray="5 5"
+                          stroke={style.stroke}
+                          strokeWidth={isSelected ? '3' : '2'}
+                          strokeDasharray={region.region_type === 'uncertain' ? '8 6' : undefined}
                         />
                       )}
 
@@ -659,7 +576,7 @@ export const EvidenceMapView: React.FC<EvidenceMapViewProps> = ({
               </span>
             </div>
             <span className="text-[11px] text-[#73877B] italic">
-              Overlays indicate localized visual evidence, not definitive species confirmation.
+              Boxes are AI-estimated areas, not pixel-level outlines. Check the photo before acting.
             </span>
           </div>
         </div>
@@ -668,7 +585,7 @@ export const EvidenceMapView: React.FC<EvidenceMapViewProps> = ({
         <div className="lg:col-span-4 space-y-4">
           <div className="neuro-card rounded-3xl p-5 space-y-4 border border-slate-700/60">
             <div className="flex items-center justify-between border-b border-[#244637] pb-3">
-              <h3 className="text-sm font-bold text-white">Region Evidence Breakdown</h3>
+              <h3 className="text-sm font-bold text-white">Estimated Evidence Areas</h3>
               <span className="text-xs font-mono text-[#A3E635] font-bold">
                 {inspection.regions.length} Regions
               </span>
@@ -700,7 +617,7 @@ export const EvidenceMapView: React.FC<EvidenceMapViewProps> = ({
                         <span className="font-bold text-white text-xs">REGION {reg.badge}</span>
                       </div>
                       <span className="font-mono text-xs font-bold text-[#BBF7D0] tabular-nums">
-                        {(reg.confidence * 100).toFixed(1)}% Conf
+                        {(reg.confidence * 100).toFixed(1)}% model estimate
                       </span>
                     </div>
 
@@ -714,7 +631,7 @@ export const EvidenceMapView: React.FC<EvidenceMapViewProps> = ({
                     </div>
 
                     <div className="mt-3 pt-2 border-t border-[#244637] flex items-center justify-between text-[10px] text-[#73877B] font-mono">
-                      <span>Area: {reg.area_mm2.toFixed(1)} mm²</span>
+                      <span>{typeof reg.area_mm2 === 'number' ? `AI area estimate: ${reg.area_mm2.toFixed(1)} mm²` : 'Area not measured'}</span>
                       <span>Type: {reg.gallery_type}</span>
                     </div>
                   </div>

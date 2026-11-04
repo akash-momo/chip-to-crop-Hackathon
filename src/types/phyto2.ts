@@ -44,8 +44,8 @@ export interface EvidenceRegion {
   confidence: number;
   evidence_description: string;
   gallery_type: 'blotch' | 'serpentine' | 'punctate' | 'indeterminate';
-  area_mm2: number;
-  active_larvae_prob: number;
+  area_mm2?: number;
+  active_larvae_prob?: number;
 }
 
 export interface DamageFingerprintRecord {
@@ -58,8 +58,10 @@ export interface DamageFingerprintRecord {
   leaf_surface_damage_percent: number;
   active_mines_count: number;
   canopy_stratum: string;
-  gps_coordinates: { lat: number; lng: number };
+  gps_coordinates?: { lat: number; lng: number } | null;
   created_at: string;
+  image_sha256?: string;
+  algorithm?: string;
 }
 
 export interface ExpertReview {
@@ -73,6 +75,7 @@ export interface ExpertReview {
 
 export interface Inspection {
   id: string;
+  record_source?: 'sample' | 'live_ai';
   plant_id: string;
   plant_identifier: string;
   field_id: string;

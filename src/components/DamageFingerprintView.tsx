@@ -28,10 +28,13 @@ export const DamageFingerprintView: React.FC<DamageFingerprintViewProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const fp = inspection.fingerprint;
+  const isSample = inspection.record_source !== 'live_ai';
+  const liveHash = isSample ? undefined : fp?.fingerprint_hash;
+  const gps = !isSample ? fp?.gps_coordinates : null;
 
   const handleCopyHash = () => {
-    if (fp?.fingerprint_hash) {
-      navigator.clipboard.writeText(fp.fingerprint_hash);
+    if (liveHash) {
+      navigator.clipboard.writeText(liveHash);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -53,13 +56,13 @@ export const DamageFingerprintView: React.FC<DamageFingerprintViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#A3E635] block mb-1">
-            LAYER 04 · IMMUTABLE INSPECTION LEDGER
+            INSPECTION RECORD · {isSample ? 'DEMO' : 'LIVE AI'}
           </span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Damage Fingerprint Certificate
+            Inspection Record Fingerprint
           </h1>
           <p className="text-xs sm:text-sm text-[#A7B8AE] mt-1">
-            Structured digital inspection record linked to plant, field, and cryptographic hash.
+            {isSample ? 'Example record only. No verified fingerprint or field location is available.' : 'SHA-256 content fingerprint for this inspection and its source image.'}
           </p>
         </div>
 
@@ -99,14 +102,14 @@ export const DamageFingerprintView: React.FC<DamageFingerprintViewProps> = ({
                 PhytoTrace 2.0 Diagnostic Certificate
               </span>
               <span className="text-[#A3E635] text-xs font-mono font-bold">
-                {fp?.id || `FP-${inspection.id}`} · ICAR-IIHR SCOUTING STANDARDS
+                {isSample ? 'DEMO SAMPLE · NO VERIFIED FINGERPRINT' : fp?.id || 'Fingerprint unavailable'}
               </span>
             </div>
           </div>
 
           <div className="text-left sm:text-right font-mono text-xs text-[#A7B8AE]">
             <span className="block text-white font-bold">{new Date(inspection.inspection_date).toUTCString()}</span>
-            <span>Block B · Solanum lycopersicum</span>
+            <span>{inspection.field_id || 'Field not recorded'}</span>
           </div>
         </div>
 
@@ -135,7 +138,7 @@ export const DamageFingerprintView: React.FC<DamageFingerprintViewProps> = ({
             </div>
 
             <div className="bg-[#0B251C] p-3 rounded-xl border border-[#244637]">
-              <span className="text-[#73877B] text-[10px] uppercase font-mono block">Lamina Damage Area</span>
+              <span className="text-[#73877B] text-[10px] uppercase font-mono block">AI-estimated leaf damage</span>
               <span className="text-sm font-bold text-white font-mono tabular-nums">
                 {inspection.overall_damage_percent.toFixed(1)}%
               </span>
@@ -143,11 +146,11 @@ export const DamageFingerprintView: React.FC<DamageFingerprintViewProps> = ({
 
             <div className="bg-[#0B251C] p-3 rounded-xl border border-[#244637]">
               <span className="text-[#73877B] text-[10px] uppercase font-mono block">Active Mines Count</span>
-              <span className="text-sm font-bold text-white font-mono">{inspection.regions.length} Galleries</span>
+              <span className="text-sm font-bold text-white font-mono">{inspection.regions.length} AI-detected regions</span>
             </div>
 
             <div className="bg-[#0B251C] p-3 rounded-xl border border-[#244637]">
-              <span className="text-[#73877B] text-[10px] uppercase font-mono block">Confidence Calibration</span>
+              <span className="text-[#73877B] text-[10px] uppercase font-mono block">Unvalidated AI estimate</span>
               <span className="text-sm font-bold text-[#BBF7D0] font-mono">
                 {(inspection.calibration_confidence * 100).toFixed(1)}%
               </span>
@@ -163,13 +166,13 @@ export const DamageFingerprintView: React.FC<DamageFingerprintViewProps> = ({
             <div className="sm:col-span-2 bg-[#0B251C] p-3 rounded-xl border border-[#244637]">
               <span className="text-[#73877B] text-[10px] uppercase font-mono block">GPS Geolocation</span>
               <span className="font-mono text-white text-[11px]">
-                {fp?.gps_coordinates.lat || 13.0498}° N, {fp?.gps_coordinates.lng || 77.5872}° E (Presidency / Bengaluru)
+                {gps ? `${gps.lat.toFixed(5)}°, ${gps.lng.toFixed(5)}°` : 'Not recorded'}
               </span>
             </div>
 
             <div className="bg-[#0B251C] p-3 rounded-xl border border-[#244637]">
               <span className="text-[#73877B] text-[10px] uppercase font-mono block">Quality Pre-Check</span>
-              <span className="text-xs font-bold text-emerald-400 font-mono">GATES PASSED</span>
+              <span className="text-xs font-bold text-emerald-400 font-mono">{isSample ? 'DEMO DATA' : 'AI CHECKS ONLY'}</span>
             </div>
           </div>
         </div>
@@ -195,8 +198,8 @@ export const DamageFingerprintView: React.FC<DamageFingerprintViewProps> = ({
                   </div>
                 </div>
                 <div className="text-right font-mono text-[11px]">
-                  <span className="text-[#A3E635] font-bold block">{(reg.confidence * 100).toFixed(0)}% Conf</span>
-                  <span className="text-[#73877B]">{reg.area_mm2.toFixed(1)} mm²</span>
+                  <span className="text-[#A3E635] font-bold block">{(reg.confidence * 100).toFixed(0)}% AI estimate</span>
+                  <span className="text-[#73877B]">Area not measured</span>
                 </div>
               </div>
             ))}
@@ -206,13 +209,15 @@ export const DamageFingerprintView: React.FC<DamageFingerprintViewProps> = ({
         {/* Cryptographic Hash Badge (Section 9) */}
         <div className="bg-[#071C16] p-3 rounded-xl border border-[#244637] flex items-center justify-between text-xs font-mono">
           <div className="flex items-center gap-2 overflow-hidden">
-            <span className="text-[#73877B] shrink-0 font-bold">SHA-256 HASH:</span>
-            <span className="text-[#A3E635] truncate">{fp?.fingerprint_hash || '0x8f4c2e17d9ab40c3912ee567fa09321e8842'}</span>
+            <span className="text-[#73877B] shrink-0 font-bold">{isSample ? 'SAMPLE RECORD:' : 'SHA-256:'}</span>
+            <span className="text-[#A3E635] truncate">{liveHash || (isSample ? 'Not generated for demo data' : 'Fingerprint unavailable')}</span>
           </div>
           <button
             onClick={handleCopyHash}
             className="text-[#A7B8AE] hover:text-white p-1 rounded-lg hover:bg-[#103D2B] transition-colors ml-2 shrink-0"
-            title="Copy Hash"
+            title={liveHash ? 'Copy SHA-256 fingerprint' : 'No verified fingerprint on a sample record'}
+            disabled={!liveHash}
+            aria-label="Copy SHA-256 fingerprint"
           >
             {copied ? <Check className="w-4 h-4 text-[#A3E635]" /> : <Copy className="w-4 h-4" />}
           </button>

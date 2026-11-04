@@ -127,14 +127,14 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* Dosage Calculator Button */}
+          {/* Field action guide button */}
           <button
             onClick={onOpenCalculator}
-            title="Open IPM Treatment & Dosage Calculator"
+            title="Open research-informed field action guide"
             className="hidden sm:flex neuro-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-emerald-400 transition-colors items-center gap-1.5"
           >
             <Calculator className="w-3.5 h-3.5 text-emerald-400" />
-            <span>IPM Calculator</span>
+            <span>Field Guide</span>
           </button>
 
           {/* Smartphone PWA Viewport Switcher */}
