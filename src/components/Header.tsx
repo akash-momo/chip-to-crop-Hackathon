@@ -1,5 +1,7 @@
 import React from 'react';
-import { Smartphone, Monitor, Sun, Moon, Calculator, Sparkles, UserCheck, Stethoscope } from 'lucide-react';
+import { Smartphone, Monitor, Sun, Moon, Calculator, Sparkles, UserCheck, Stethoscope, ArrowLeft } from 'lucide-react';
+import { LanguageSelector } from './LanguageSelector';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HeaderProps {
   activeView: 'evidence' | 'farm-grid' | 'longitudinal' | 'six-layers' | 'benchmarks';
@@ -12,6 +14,7 @@ interface HeaderProps {
   setIsFarmerSimpleMode: (val: boolean) => void;
   onOpenNewInspection: () => void;
   onOpenCalculator: () => void;
+  onExitToLanding?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -25,12 +28,33 @@ export const Header: React.FC<HeaderProps> = ({
   setIsFarmerSimpleMode,
   onOpenNewInspection,
   onOpenCalculator,
+  onExitToLanding,
 }) => {
+  const { t } = useLanguage();
+
+  const handleBack = () => {
+    if (onExitToLanding) {
+      onExitToLanding();
+    } else {
+      window.dispatchEvent(new CustomEvent('exit-to-landing'));
+    }
+  };
+
   return (
     <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4 md:gap-8">
-        {/* Zone 1: Brand wordmark (single text element wordmark, no decorative pill attachments) */}
+        {/* Zone 1: Top-Left Back Button & Brand wordmark */}
         <div className="flex items-center gap-3 shrink-0">
+          {/* Small Top-Left Back Icon Button */}
+          <button
+            onClick={handleBack}
+            title="Back to Landing Page"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 text-slate-300 hover:text-white transition-all text-xs font-semibold group cursor-pointer shadow-sm"
+          >
+            <ArrowLeft className="w-4 h-4 text-emerald-400 group-hover:-translate-x-0.5 transition-transform" />
+            <span className="hidden sm:inline">Back</span>
+          </button>
+
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-slate-950 font-bold text-lg shadow-md shadow-emerald-500/30">
             Φ
           </div>
@@ -42,12 +66,12 @@ export const Header: React.FC<HeaderProps> = ({
               PhytoTrace
             </span>
             <span className="hidden sm:inline-block text-xs text-slate-400 ml-2 font-normal">
-              Chip to Crop 2026
+              {t('chipToCrop')}
             </span>
           </button>
         </div>
 
-        {/* Zone 2: Concise navigation links (single line, no wrapping, subtle underline) */}
+        {/* Zone 2: Concise navigation links with translations */}
         <nav className="hidden md:flex items-center gap-5 text-xs font-semibold text-slate-400">
           <button
             onClick={() => setActiveView('evidence')}
@@ -55,7 +79,7 @@ export const Header: React.FC<HeaderProps> = ({
               activeView === 'evidence' ? 'text-emerald-400 border-b-2 border-emerald-400' : ''
             }`}
           >
-            Evidence Map
+            {t('evidenceMap')}
           </button>
           <button
             onClick={() => setActiveView('farm-grid')}
@@ -63,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
               activeView === 'farm-grid' ? 'text-emerald-400 border-b-2 border-emerald-400' : ''
             }`}
           >
-            Farm Grid
+            {t('farmGrid')}
           </button>
           <button
             onClick={() => setActiveView('longitudinal')}
@@ -71,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({
               activeView === 'longitudinal' ? 'text-emerald-400 border-b-2 border-emerald-400' : ''
             }`}
           >
-            Progression
+            {t('progression')}
           </button>
           <button
             onClick={() => setActiveView('six-layers')}
@@ -79,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({
               activeView === 'six-layers' ? 'text-emerald-400 border-b-2 border-emerald-400' : ''
             }`}
           >
-            6 Layers
+            {t('sixLayers')}
           </button>
           <button
             onClick={() => setActiveView('benchmarks')}
@@ -87,12 +111,15 @@ export const Header: React.FC<HeaderProps> = ({
               activeView === 'benchmarks' ? 'text-emerald-400 border-b-2 border-emerald-400' : ''
             }`}
           >
-            Scientific Proof
+            {t('scientificProof')}
           </button>
         </nav>
 
         {/* Zone 3: Tactile Neumorphic Controls & Actions */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          {/* Multi-Language Selector */}
+          <LanguageSelector />
+
           {/* Simple Farmer Mode vs Agronomist Pro Mode */}
           <button
             onClick={() => setIsFarmerSimpleMode(!isFarmerSimpleMode)}
@@ -104,17 +131,17 @@ export const Header: React.FC<HeaderProps> = ({
             {isFarmerSimpleMode ? (
               <>
                 <UserCheck className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden sm:inline">Farmer Mode</span>
+                <span className="hidden sm:inline">{t('farmerMode')}</span>
               </>
             ) : (
               <>
                 <Stethoscope className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">Agronomist Pro</span>
+                <span className="hidden sm:inline">{t('agronomistPro')}</span>
               </>
             )}
           </button>
 
-          {/* Daylight High-Visibility Mode Toggle (for sunlight visibility in field) */}
+          {/* Daylight High-Visibility Mode Toggle */}
           <button
             onClick={() => setIsDaylightMode(!isDaylightMode)}
             title={isDaylightMode ? 'Switch to Dark Greenhouse Mode' : 'Switch to High-Contrast Daylight Mode'}
@@ -134,7 +161,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="hidden sm:flex neuro-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-emerald-400 transition-colors items-center gap-1.5"
           >
             <Calculator className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Field Guide</span>
+            <span>{t('fieldGuide')}</span>
           </button>
 
           {/* Smartphone PWA Viewport Switcher */}
@@ -146,23 +173,23 @@ export const Header: React.FC<HeaderProps> = ({
             {pwaMode ? (
               <>
                 <Monitor className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Desktop</span>
+                <span>{t('desktop')}</span>
               </>
             ) : (
               <>
                 <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Mobile PWA</span>
+                <span>{t('mobilePwa')}</span>
               </>
             )}
           </button>
 
-          {/* Primary CTA: New Inspection (Punchy tactile neumorphic button) */}
+          {/* Primary CTA: New Inspection */}
           <button
             onClick={onOpenNewInspection}
             className="neuro-btn-emerald px-3.5 py-2 rounded-xl text-xs font-bold text-slate-950 flex items-center gap-1.5 shadow-lg shadow-emerald-500/25 active:scale-95 transition-all whitespace-nowrap cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>New Inspection</span>
+            <span>{t('newInspection')}</span>
           </button>
         </div>
       </div>

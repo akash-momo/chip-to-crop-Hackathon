@@ -163,12 +163,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               </button>
 
               <button
-                onClick={onExitToLanding}
-                className="w-full flex items-center justify-center gap-1.5 py-1 text-[11px] text-[#73877B] hover:text-white transition-colors"
-              >
-                <ExternalLink className="w-3 h-3" />
-                <span>Exit to Landing Page</span>
-              </button>
+  onClick={onExitToLanding}
+  className="flex items-center justify-center gap-2 text-xs text-slate-500 hover:text-emerald-600 hover:underline transition-colors mt-2"
+>
+  <ExternalLink className="w-4 h-4" />
+  <span>Exit to Landing Page</span>
+</button>
             </div>
           ) : (
             <button

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { LanguageProvider } from './context/LanguageContext';
+import { LanguageSelector } from './components/LanguageSelector';
 import { LandingPage } from './components/LandingPage';
 import { DashboardLayout } from './components/DashboardLayout';
 import { OverviewView } from './components/OverviewView';
@@ -145,115 +147,120 @@ export default function App() {
     activeField,
   };
 
-  // 1. Public Landing Page Mode
-  if (appMode === 'landing') {
-    return (
-      <LandingPage
-        onLaunchDashboard={handleLaunchDashboard}
-        onAuthSuccess={handleAuthSuccess}
-      />
-    );
-  }
-
-  // 2. Authenticated Dashboard Mode
   return (
-    <>
-      <DashboardLayout
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
-        currentUser={currentUser}
-        setCurrentUser={setCurrentUser}
-        activeFarm={activeFarm}
-        onExitToLanding={() => setAppMode('landing')}
-        pendingReviewsCount={pendingReviewsCount}
-      >
-        {currentTab === 'overview' && (
-          <OverviewView
-            overviewData={overviewData}
-            onSelectInspection={(insp) => {
-              setActiveInspection(insp);
-              setCurrentTab('evidence');
-            }}
-            onNavigateTab={setCurrentTab}
-            userName={currentUser.name}
-          />
-        )}
+    <LanguageProvider>
+      {/* Top-Right Floating Language Selector (Always visible on Landing Page and Dashboard) */}
+      <div className="fixed top-3 right-4 z-50">
+        <LanguageSelector />
+      </div>
 
-        {currentTab === 'scanner' && (
-          <ScannerView
-            onInspectionAnalyzed={handleInspectionAnalyzed}
-            onNavigateToEvidence={() => setCurrentTab('evidence')}
-          />
-        )}
-
-        {currentTab === 'evidence' && activeInspection && (
-          <EvidenceMapView
-            inspection={activeInspection}
-            onNavigateToFingerprint={() => setCurrentTab('reports')}
-            onNavigateToReport={() => setReportModalOpen(true)}
+      {/* 1. Public Landing Page Mode */}
+      {appMode === 'landing' ? (
+        <LandingPage
+          onLaunchDashboard={handleLaunchDashboard}
+          onAuthSuccess={handleAuthSuccess}
+        />
+      ) : (
+        /* 2. Authenticated Dashboard Mode */
+        <>
+          <DashboardLayout
+            currentTab={currentTab}
+            setCurrentTab={setCurrentTab}
             currentUser={currentUser}
-            onUpdateInspection={handleUpdateInspection}
-          />
-        )}
+            setCurrentUser={setCurrentUser}
+            activeFarm={activeFarm}
+            onExitToLanding={() => setAppMode('landing')}
+            pendingReviewsCount={pendingReviewsCount}
+          >
+            {currentTab === 'overview' && (
+              <OverviewView
+                overviewData={overviewData}
+                onSelectInspection={(insp) => {
+                  setActiveInspection(insp);
+                  setCurrentTab('evidence');
+                }}
+                onNavigateTab={setCurrentTab}
+                userName={currentUser.name}
+              />
+            )}
 
-        {currentTab === 'plants' && (
-          <PlantMonitoringView
-            plants={plants}
-            onSelectPlantToInspect={handleSelectPlantToInspect}
-            onOpenEvidenceForPlant={handleOpenEvidenceForPlant}
-          />
-        )}
+            {currentTab === 'scanner' && (
+              <ScannerView
+                onInspectionAnalyzed={handleInspectionAnalyzed}
+                onNavigateToEvidence={() => setCurrentTab('evidence')}
+              />
+            )}
 
-        {currentTab === 'history' && (
-          <InspectionHistoryView
-            inspections={inspections}
-            onSelectInspection={(insp) => {
+            {currentTab === 'evidence' && activeInspection && (
+              <EvidenceMapView
+                inspection={activeInspection}
+                onNavigateToFingerprint={() => setCurrentTab('reports')}
+                onNavigateToReport={() => setReportModalOpen(true)}
+                currentUser={currentUser}
+                onUpdateInspection={handleUpdateInspection}
+              />
+            )}
+
+            {currentTab === 'plants' && (
+              <PlantMonitoringView
+                plants={plants}
+                onSelectPlantToInspect={handleSelectPlantToInspect}
+                onOpenEvidenceForPlant={handleOpenEvidenceForPlant}
+              />
+            )}
+
+            {currentTab === 'history' && (
+              <InspectionHistoryView
+                inspections={inspections}
+                onSelectInspection={(insp) => {
+                  setActiveInspection(insp);
+                  setCurrentTab('evidence');
+                }}
+                onOpenReport={(insp) => {
+                  setActiveInspection(insp);
+                  setReportModalOpen(true);
+                }}
+                onCompareInspections={handleCompareInspections}
+              />
+            )}
+
+            {currentTab === 'reports' && activeInspection && (
+              <DamageFingerprintView
+                inspection={activeInspection}
+                onOpenReport={() => setReportModalOpen(true)}
+                onNavigateToEvidence={() => setCurrentTab('evidence')}
+              />
+            )}
+
+            {currentTab === 'analytics' && (
+              <FarmAnalyticsView
+                inspections={inspections}
+                plants={plants}
+              />
+            )}
+          </DashboardLayout>
+
+          {/* Structured Report / PDF Modal */}
+          <ReportModal
+            isOpen={reportModalOpen}
+            onClose={() => setReportModalOpen(false)}
+            inspection={activeInspection}
+          />
+
+          {/* Side-by-Side Specimen Comparison Modal */}
+          <InspectionComparisonModal
+            isOpen={comparisonModalOpen}
+            onClose={() => setComparisonModalOpen(false)}
+            inspectionA={comparisonPair?.[0] || null}
+            inspectionB={comparisonPair?.[1] || null}
+            onSelectForView={(insp) => {
               setActiveInspection(insp);
               setCurrentTab('evidence');
             }}
-            onOpenReport={(insp) => {
-              setActiveInspection(insp);
-              setReportModalOpen(true);
-            }}
-            onCompareInspections={handleCompareInspections}
           />
-        )}
-
-        {currentTab === 'reports' && activeInspection && (
-          <DamageFingerprintView
-            inspection={activeInspection}
-            onOpenReport={() => setReportModalOpen(true)}
-            onNavigateToEvidence={() => setCurrentTab('evidence')}
-          />
-        )}
-
-        {currentTab === 'analytics' && (
-          <FarmAnalyticsView
-            inspections={inspections}
-            plants={plants}
-          />
-        )}
-      </DashboardLayout>
-
-      {/* Structured Report / PDF Modal */}
-      <ReportModal
-        isOpen={reportModalOpen}
-        onClose={() => setReportModalOpen(false)}
-        inspection={activeInspection}
-      />
-
-      {/* Side-by-Side Specimen Comparison Modal */}
-      <InspectionComparisonModal
-        isOpen={comparisonModalOpen}
-        onClose={() => setComparisonModalOpen(false)}
-        inspectionA={comparisonPair?.[0] || null}
-        inspectionB={comparisonPair?.[1] || null}
-        onSelectForView={(insp) => {
-          setActiveInspection(insp);
-          setCurrentTab('evidence');
-        }}
-      />
-      <PlantHelpChat />
-    </>
+          <PlantHelpChat />
+        </>
+      )}
+    </LanguageProvider>
   );
 }
